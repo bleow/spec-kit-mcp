@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 
 # Consolidated prerequisite checking script (PowerShell)
 #
@@ -20,36 +20,59 @@ param(
     [switch]$RequireTasks,
     [switch]$IncludeTasks,
     [switch]$PathsOnly,
-    [switch]$Help
+    [switch]$Help,
+    [string]$Arguments = ""
 )
 
 $ErrorActionPreference = 'Stop'
 
+# Auto-detect OS and redirect if needed
+. "$PSScriptRoot/common.ps1"
+
+$OS = Get-DetectedOS
+if ($OS -eq "unix") {
+    # Running PowerShell on Unix - redirect to bash
+    $bashScript = Join-Path $PSScriptRoot "../bash/check-prerequisites.sh"
+
+    # Convert PowerShell switches to bash arguments
+    $bashArgs = @()
+    if ($Json) { $bashArgs += "--json" }
+    if ($RequireTasks) { $bashArgs += "--require-tasks" }
+    if ($IncludeTasks) { $bashArgs += "--include-tasks" }
+    if ($PathsOnly) { $bashArgs += "--paths-only" }
+    if ($Help) { $bashArgs += "--help" }
+    if ($Arguments) { $bashArgs += $Arguments }
+
+    & bash $bashScript @bashArgs
+    exit $LASTEXITCODE
+}
+
+# Continue with PowerShell implementation for Windows
+
 # Show help if requested
 if ($Help) {
-    Write-Output @"
-Usage: check-prerequisites.ps1 [OPTIONS]
-
-Consolidated prerequisite checking for Spec-Driven Development workflow.
-
-OPTIONS:
-  -Json               Output in JSON format
-  -RequireTasks       Require tasks.md to exist (for implementation phase)
-  -IncludeTasks       Include tasks.md in AVAILABLE_DOCS list
-  -PathsOnly          Only output path variables (no prerequisite validation)
-  -Help, -h           Show this help message
-
-EXAMPLES:
-  # Check task prerequisites (plan.md required)
-  .\check-prerequisites.ps1 -Json
-  
-  # Check implementation prerequisites (plan.md + tasks.md required)
-  .\check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks
-  
-  # Get feature paths only (no validation)
-  .\check-prerequisites.ps1 -PathsOnly
-
-"@
+    Write-Output "Usage: check-prerequisites.ps1 [OPTIONS]"
+    Write-Output ""
+    Write-Output "Consolidated prerequisite checking for Spec-Driven Development workflow."
+    Write-Output ""
+    Write-Output "OPTIONS:"
+    Write-Output "  -Json               Output in JSON format"
+    Write-Output "  -RequireTasks       Require tasks.md to exist (for implementation phase)"
+    Write-Output "  -IncludeTasks       Include tasks.md in AVAILABLE_DOCS list"
+    Write-Output "  -PathsOnly          Only output path variables (no prerequisite validation)"
+    Write-Output "  -Arguments          Optional user description (for consistency with setup-plan)"
+    Write-Output "  -Help, -h           Show this help message"
+    Write-Output ""
+    Write-Output "EXAMPLES:"
+    Write-Output "  # Check task prerequisites (plan.md required)"
+    Write-Output "  .\check-prerequisites.ps1 -Json"
+    Write-Output "  "
+    Write-Output "  # Check implementation prerequisites (plan.md + tasks.md required)"
+    Write-Output "  .\check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks"
+    Write-Output "  "
+    Write-Output "  # Get feature paths only (no validation)"
+    Write-Output "  .\check-prerequisites.ps1 -PathsOnly"
+    Write-Output ""
     exit 0
 }
 
@@ -88,20 +111,20 @@ if ($PathsOnly) {
 # Validate required directories and files
 if (-not (Test-Path $paths.FEATURE_DIR -PathType Container)) {
     Write-Output "ERROR: Feature directory not found: $($paths.FEATURE_DIR)"
-    Write-Output "Run /speckit.specify first to create the feature structure."
+    Write-Output "Run /speckitsmart.specify first to create the feature structure."
     exit 1
 }
 
 if (-not (Test-Path $paths.IMPL_PLAN -PathType Leaf)) {
     Write-Output "ERROR: plan.md not found in $($paths.FEATURE_DIR)"
-    Write-Output "Run /speckit.plan first to create the implementation plan."
+    Write-Output "Run /speckitsmart.plan first to create the implementation plan."
     exit 1
 }
 
 # Check for tasks.md if required
 if ($RequireTasks -and -not (Test-Path $paths.TASKS -PathType Leaf)) {
     Write-Output "ERROR: tasks.md not found in $($paths.FEATURE_DIR)"
-    Write-Output "Run /speckit.tasks first to create the task list."
+    Write-Output "Run /speckitsmart.tasks first to create the task list."
     exit 1
 }
 
