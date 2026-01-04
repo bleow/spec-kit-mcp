@@ -1,4 +1,4 @@
-import { MCPClient } from ".";
+import { MCPClient } from "./index.js";
 
 async function main() {
   if (process.argv.length < 3) {
