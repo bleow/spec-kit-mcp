@@ -1,3 +1,4 @@
+// standard file from tutorial https://modelcontextprotocol.io/docs/develop/build-server#typescript
 {
   "compilerOptions": {
     "target": "ES2022",

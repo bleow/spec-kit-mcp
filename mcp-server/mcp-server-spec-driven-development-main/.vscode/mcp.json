@@ -1,3 +1,5 @@
+// tell the MCP client that this MCP server exists
+// https://modelcontextprotocol.io/docs/develop/build-server#testing-your-server-with-claude-for-desktop-2
 {
   "servers": {
     "spec-driven-stdio": {
@@ -5,9 +7,5 @@
       "command": "node",
       "args": ["${workspaceFolder}/dist/index.js"]
     }
-    // "spec-driven-streamable-http": {
-    //   "type": "http",
-    //   "url": "http://localhost:3088/mcp"
-    // },
   }
 }
