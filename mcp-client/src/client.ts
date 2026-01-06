@@ -5,6 +5,7 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import readline from "readline/promises";
 import dotenv from "dotenv";
 import { loadEnv } from "./util.js";
+import { Prompt } from "@modelcontextprotocol/sdk/types.js";
 
 dotenv.config();
 
@@ -19,7 +20,7 @@ export class MCPClient {
   private mcp: Client;
   private anthropic: Anthropic;
   private transport: StdioClientTransport | null = null;
-  private tools: Tool[] = [];
+  private prompts: Prompt[] = [];
 
   constructor() {
     this.anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
@@ -40,18 +41,12 @@ export class MCPClient {
       this.transport = new StdioClientTransport({ command, args: [serverScriptPath] });
       await this.mcp.connect(this.transport);
 
-      const toolsResult = await this.mcp.listTools();
-      console.log("heres the tools fuck");
-      console.log(toolsResult);
-      this.tools = toolsResult.tools.map((tool) => {
-        return {
-          name: tool.name,
-          description: tool.description,
-          input_schema: tool.inputSchema,
-        };
-      });
+      const promptsResult = await this.mcp.listPrompts();
+      console.log("heres the prompts");
+      console.log(promptsResult);
+      this.prompts = promptsResult.prompts;
       // prettier-ignore
-      console.log("Connected to server with tools:", this.tools.map(({ name }) => name));
+      console.log("Connected to server with prompts:", this.prompts);
     } catch (e) {
       console.log("Failed to connect to MCP server: ", e);
       throw e;
@@ -60,51 +55,52 @@ export class MCPClient {
 
   // call the tools and parse a response
   async processQuery(query: string) {
-    const messages: MessageParam[] = [
-      {
-        role: "user",
-        content: query,
-      },
-    ];
+    console.log("hi");
+    console.log(query);
+    // const messages: MessageParam[] = [
+    //   {
+    //     role: "user",
+    //     content: query,
+    //   },
+    // ];
 
-    const response = await this.anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1000,
-      messages,
-      tools: this.tools,
-    });
+    // const response = await this.anthropic.messages.create({
+    //   model: "claude-sonnet-4-20250514",
+    //   max_tokens: 1000,
+    //   messages
+    // });
 
-    const finalText = [];
+    // const finalText = [];
 
-    for (const content of response.content) {
-      if (content.type === "text") {
-        finalText.push(content.text);
-      } else if (content.type === "tool_use") {
-        const toolName = content.name;
-        const toolArgs = content.input as { [x: string]: unknown } | undefined;
+    // for (const content of response.content) {
+    //   if (content.type === "text") {
+    //     finalText.push(content.text);
+    //   } else if (content.type === "tool_use") {
+    //     const toolName = content.name;
+    //     const toolArgs = content.input as { [x: string]: unknown } | undefined;
 
-        const result = await this.mcp.callTool({
-          name: toolName,
-          arguments: toolArgs,
-        });
-        finalText.push(`[Calling tool ${toolName} with args ${JSON.stringify(toolArgs)}]`);
+    //     const result = await this.mcp.callTool({
+    //       name: toolName,
+    //       arguments: toolArgs,
+    //     });
+    //     finalText.push(`[Calling tool ${toolName} with args ${JSON.stringify(toolArgs)}]`);
 
-        messages.push({
-          role: "user",
-          content: result.content as string,
-        });
+    //     messages.push({
+    //       role: "user",
+    //       content: result.content as string,
+    //     });
 
-        const response = await this.anthropic.messages.create({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          messages,
-        });
+    //     const response = await this.anthropic.messages.create({
+    //       model: "claude-sonnet-4-20250514",
+    //       max_tokens: 1000,
+    //       messages,
+    //     });
 
-        finalText.push(response.content[0].type === "text" ? response.content[0].text : "");
-      }
-    }
+    //     finalText.push(response.content[0].type === "text" ? response.content[0].text : "");
+    //   }
+    // }
 
-    return finalText.join("\n");
+    // return finalText.join("\n");
   }
 
   // main loop
