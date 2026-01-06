@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env pwsh
+#!/usr/bin/env pwsh
 # Common PowerShell functions analogous to common.sh
 
 function Get-RepoRoot {
@@ -87,41 +87,17 @@ function Test-FeatureBranch {
     return $true
 }
 
-# Find feature directory - extract folder name from branch name
-# Splits branch name by '/' or '\' and takes the last part
-# Example: "feature/C12345-6789-new-app" → "C12345-6789-new-app"
-function Find-FeatureDirByPrefix {
-    param(
-        [string]$RepoRoot,
-        [string]$BranchName
-    )
-
-    $specsDir = Join-Path $RepoRoot "specs"
-
-    # Extract the last part of branch name (after last '/' or '\')
-    # Filter out empty strings to handle edge cases
-    $parts = $BranchName.Split(@('/', '\')) | Where-Object { $_ -ne '' }
-    if ($parts.Count -gt 0) {
-        $folderName = $parts[-1]
-    } else {
-        $folderName = $BranchName
-    }
-
-    # Ensure folder name doesn't contain any slashes (defensive check)
-    $folderName = $folderName -replace '[/\\]', '-'
-
-    # Return specs/folder_name path
-    return (Join-Path $specsDir $folderName)
+function Get-FeatureDir {
+    param([string]$RepoRoot, [string]$Branch)
+    Join-Path $RepoRoot "specs/$Branch"
 }
 
 function Get-FeaturePathsEnv {
     $repoRoot = Get-RepoRoot
     $currentBranch = Get-CurrentBranch
     $hasGit = Test-HasGit
-
-    # Use prefix-based lookup to support multiple branches per spec
-    $featureDir = Find-FeatureDirByPrefix -RepoRoot $repoRoot -BranchName $currentBranch
-
+    $featureDir = Get-FeatureDir -RepoRoot $repoRoot -Branch $currentBranch
+    
     [PSCustomObject]@{
         REPO_ROOT     = $repoRoot
         CURRENT_BRANCH = $currentBranch
@@ -140,10 +116,10 @@ function Get-FeaturePathsEnv {
 function Test-FileExists {
     param([string]$Path, [string]$Description)
     if (Test-Path -Path $Path -PathType Leaf) {
-        Write-Output "  [OK] $Description"
+        Write-Output "  ✓ $Description"
         return $true
     } else {
-        Write-Output "  [X] $Description"
+        Write-Output "  ✗ $Description"
         return $false
     }
 }
@@ -151,88 +127,11 @@ function Test-FileExists {
 function Test-DirHasFiles {
     param([string]$Path, [string]$Description)
     if ((Test-Path -Path $Path -PathType Container) -and (Get-ChildItem -Path $Path -ErrorAction SilentlyContinue | Where-Object { -not $_.PSIsContainer } | Select-Object -First 1)) {
-        Write-Output "  [OK] $Description"
+        Write-Output "  ✓ $Description"
         return $true
     } else {
-        Write-Output "  [X] $Description"
+        Write-Output "  ✗ $Description"
         return $false
-    }
-}
-
-# Load Spec Kit configuration from .specify/config.json
-# Sets environment variables:
-#   SPEC_KIT_OS_ENV - OS override from config ("windows", "unix", "auto")
-#   SPEC_KIT_CHECK_ARTIFACTORY - Whether to check artifactory ("true" or "false")
-function Load-SpecKitConfig {
-    $repoRoot = Get-RepoRoot
-    $configFile = Join-Path $repoRoot ".specify\config.json"
-
-    # Defaults
-    $env:SPEC_KIT_OS_ENV = "auto"
-    $env:SPEC_KIT_CHECK_ARTIFACTORY = "false"
-
-    # Try to read config if exists
-    if (Test-Path $configFile) {
-        try {
-            $config = Get-Content $configFile -Raw | ConvertFrom-Json
-
-            # Get osEnv and checkArt from nested workflow structure with defaults
-            $osEnv = if ($config.workflow -and $config.workflow.PSObject.Properties.Name -contains "osEnv") { $config.workflow.osEnv } else { "auto" }
-            $checkArt = if ($config.workflow -and $config.workflow.PSObject.Properties.Name -contains "enableCheckArtifactory") { $config.workflow.enableCheckArtifactory } else { $false }
-
-            # Validate osEnv value
-            if ($osEnv -eq "windows" -or $osEnv -eq "unix" -or $osEnv -eq "auto") {
-                $env:SPEC_KIT_OS_ENV = $osEnv
-            } else {
-                Write-Warning "WARNING: Invalid osEnv value in .specify/config.json: `"$osEnv`""
-                Write-Warning "Valid values: `"windows`", `"unix`", `"auto`""
-                Write-Warning "Falling back to `"auto`" (OS auto-detection)"
-                $env:SPEC_KIT_OS_ENV = "auto"
-            }
-
-            # Set check_artifactory
-            if ($checkArt -eq $true) {
-                $env:SPEC_KIT_CHECK_ARTIFACTORY = "true"
-            } else {
-                $env:SPEC_KIT_CHECK_ARTIFACTORY = "false"
-            }
-        } catch {
-            # JSON parsing failed, use defaults
-            Write-Warning "Failed to parse .specify/config.json: $($_.Exception.Message)"
-        }
-    }
-}
-
-# Detect operating system using config priority:
-# 1. Config file (.specify/config.json osEnv)
-# 2. Environment variable (SPEC_KIT_PLATFORM)
-# 3. Auto-detection ($env:OS check)
-# Returns: "windows" or "unix"
-function Get-DetectedOS {
-    # Load config if not already loaded
-    if (-not $env:SPEC_KIT_OS_ENV) {
-        Load-SpecKitConfig
-    }
-
-    # Priority 1: Config file override
-    if ($env:SPEC_KIT_OS_ENV -eq "windows") {
-        return "windows"
-    } elseif ($env:SPEC_KIT_OS_ENV -eq "unix") {
-        return "unix"
-    }
-
-    # Priority 2: Environment variable override
-    if ($env:SPEC_KIT_PLATFORM -eq "windows") {
-        return "windows"
-    } elseif ($env:SPEC_KIT_PLATFORM -eq "unix") {
-        return "unix"
-    }
-
-    # Priority 3: Auto-detect
-    if ($env:OS -eq "Windows_NT") {
-        return "windows"
-    } else {
-        return "unix"
     }
 }
 
