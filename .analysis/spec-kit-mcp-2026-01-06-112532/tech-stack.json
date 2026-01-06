@@ -1,0 +1,19 @@
+﻿{
+    "frameworks":  {
+                       "backend":  null,
+                       "frontend":  null
+                   },
+    "databases":  [
+
+                  ],
+    "schema_version":  "1.0",
+    "build_tools":  null,
+    "languages":  "javascript",
+    "indicators_found":  [
+                             {
+                                 "confidence":  "high",
+                                 "file":  "package.json",
+                                 "type":  "nodejs"
+                             }
+                         ]
+}

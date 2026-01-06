@@ -1,0 +1,49 @@
+﻿{
+    "schema_version":  "1.0",
+    "total_files":  9066,
+    "analysis_priority":  {
+                              "low":  [
+                                          "tests",
+                                          "docs"
+                                      ],
+                              "critical":  [
+                                               "configs",
+                                               "security",
+                                               "entry_points"
+                                           ],
+                              "medium":  [
+                                             "middleware",
+                                             "utils"
+                                         ],
+                              "high":  [
+                                           "controllers",
+                                           "services",
+                                           "models",
+                                           "repositories"
+                                       ]
+                          },
+    "entry_points":  [
+                         "mcp-client\\build\\src\\index.js",
+                         "mcp-client\\node_modules\\.bin\\tsserver.cmd",
+                         "mcp-client\\node_modules\\.bin\\tsserver.ps1",
+                         "mcp-client\\node_modules\\@anthropic-ai\\sdk\\index.d.mts",
+                         "mcp-client\\node_modules\\@anthropic-ai\\sdk\\index.d.mts.map",
+                         "mcp-client\\node_modules\\@anthropic-ai\\sdk\\index.d.ts",
+                         "mcp-client\\node_modules\\@anthropic-ai\\sdk\\index.d.ts.map",
+                         "mcp-client\\node_modules\\@anthropic-ai\\sdk\\index.js",
+                         "mcp-client\\node_modules\\@anthropic-ai\\sdk\\index.js.map",
+                         "mcp-client\\node_modules\\@anthropic-ai\\sdk\\index.mjs"
+                     ],
+    "categories":  {
+                       "repositories":  87,
+                       "security":  444,
+                       "utils":  1250,
+                       "middleware":  290,
+                       "tests":  4294,
+                       "models":  2184,
+                       "controllers":  133,
+                       "docs":  636,
+                       "configs":  235,
+                       "services":  150
+                   }
+}
